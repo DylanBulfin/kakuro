@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3 uid="uid://cr0jndddeyiqj"]
+
+[ext_resource type="Script" uid="uid://cabw0ymq3vvo3" path="res://kakuro.gd" id="1_ivmcf"]
+[ext_resource type="Texture2D" uid="uid://djwxbfw7c2oc8" path="res://assets/background.aseprite" id="2_vl6pe"]
+[ext_resource type="Script" uid="uid://died5njhx2fvy" path="res://background_layer.gd" id="3_u07yb"]
+[ext_resource type="Script" uid="uid://b0t3xpe0icgat" path="res://rules.gd" id="4_aofmq"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_u07yb"]
+texture = ExtResource("2_vl6pe")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_aofmq"]
+tile_size = Vector2i(32, 32)
+sources/0 = SubResource("TileSetAtlasSource_u07yb")
+
+[node name="Kakuro" type="Node"]
+script = ExtResource("1_ivmcf")
+
+[node name="GameNode" type="Node2D" parent="."]
+
+[node name="TileMap" type="Node2D" parent="GameNode"]
+unique_name_in_owner = true
+
+[node name="BackgroundLayer" type="TileMapLayer" parent="GameNode/TileMap"]
+unique_name_in_owner = true
+tile_set = SubResource("TileSet_aofmq")
+script = ExtResource("3_u07yb")
+
+[node name="Rules" type="Node2D" parent="GameNode"]
+unique_name_in_owner = true
+script = ExtResource("4_aofmq")
+
+[node name="Camera2D" type="Camera2D" parent="GameNode"]
+anchor_mode = 0
