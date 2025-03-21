@@ -20,12 +20,18 @@ var cells: Array[Cell]
 # The value all relevant cells are expected to add to
 var value: int = 0
 
-func _init(row_: int, column_: int, num_cells_: int, value_: int, is_vertical_: bool = false):
+func _init(row_: int, column_: int, num_cells_: int, value_: int, is_vertical_: bool):
 	row = row_
 	column = column_
 	num_cells = num_cells_
 	value = value_
 	is_vertical = is_vertical_
+
+static func new_vert(row_: int, column_: int, num_cells_: int, value_: int) -> Rule:
+	return Rule.new(row_, column_, num_cells_, value_, true)
+
+static func new_horiz(row_: int, column_: int, num_cells_: int, value_: int) -> Rule:
+	return Rule.new(row_, column_, num_cells_, value_, false)
 
 # Check if rule is invalidated
 func validate_rule() -> RuleState:

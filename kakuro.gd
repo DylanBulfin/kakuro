@@ -19,9 +19,10 @@ func _on_puzzle_changed() -> void:
 func _process(_delta: float) -> void:
 	if not initialized:
 		draw_all()
-		initialized = true
 
 func draw_all() -> void:
 	%BackgroundLayer.draw_puzzle()
 	%Rules.draw_puzzle()
 	%NumbersLayer.draw_puzzle()
+	
+	initialized = true

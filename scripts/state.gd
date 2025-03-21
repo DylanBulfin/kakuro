@@ -4,6 +4,8 @@ var puzzle: Puzzle
 signal puzzle_changed
 signal cell_digit_changed(coords: Vector2i, cell: Cell)
 
+# It would be useful to have no selection, for example a mode where you select the number first
+var is_selected: bool = true
 var selected: Vector2i
 var selected_cell: Cell
 signal selected_changed(old_selected: Vector2i)
@@ -18,7 +20,10 @@ func _ready() -> void:
 		Rule.new(3, 0, 3, 11, false),
 	]
 	
-	puzzle = Puzzle.new(4, 4, rules)
+	load_new_puzzle(4, 4, rules)
+
+func load_new_puzzle(x: int, y: int, rules: Array[Rule]) -> void:
+	puzzle = Puzzle.new(x, y, rules)
 	
 	# Find first selectable entry
 	for i in puzzle.width:
@@ -43,11 +48,12 @@ func change_selection(coords: Vector2i) -> void:
 		var old_selected = selected
 		selected_cell = cell
 		selected = coords
+		is_selected = true
 		
 		selected_changed.emit(old_selected)
 
 func update_selected_digit(digit: int) -> void:
-	if selected_cell.digit != digit:
+	if is_selected and selected_cell.digit != digit:
 		var old_digit: int = selected_cell.digit
 		selected_cell.digit = digit
 		

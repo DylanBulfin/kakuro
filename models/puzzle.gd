@@ -26,7 +26,7 @@ func generate_cells():
 	for rule in rules:
 		# Set up rule cell
 		if not rows[rule.row][rule.column]:
-			rows[rule.row][rule.column] = Cell.new(false)
+			rows[rule.row][rule.column] = Cell.new(false, rule.column, rule.row)
 		rows[rule.row][rule.column].rules.append(rule)
 
 		
