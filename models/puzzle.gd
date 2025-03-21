@@ -25,21 +25,21 @@ func generate_cells():
 			
 	for rule in rules:
 		# Set up rule cell
-		if not rows[rule.row][rule.column]:
-			rows[rule.row][rule.column] = Cell.new(false, rule.column, rule.row)
-		rows[rule.row][rule.column].rules.append(rule)
+		if not rows[rule.y][rule.x]:
+			rows[rule.y][rule.x] = Cell.new(false, rule.x, rule.y)
+		rows[rule.y][rule.x].rules.append(rule)
 
 		
 		for i in range(1, rule.num_cells + 1):
 			var coords: Vector2i
 			if rule.is_vertical:
-				coords = Vector2i(rule.column, rule.row + i)
+				coords = Vector2i(rule.x, rule.y + i)
 			else:
-				coords = Vector2i(rule.column + i, rule.row)
+				coords = Vector2i(rule.x + i, rule.y)
 		
 			if not rows[coords.y][coords.x]:
 				# create cell
-				rows[coords.y][coords.x] = Cell.new(true)
+				rows[coords.y][coords.x] = Cell.new(true, coords.x, coords.y)
 	
 			# Add rule to cell
 			rows[coords.y][coords.x].rules.append(rule)
@@ -48,14 +48,17 @@ func generate_cells():
 			rule.cells.append(rows[coords.y][coords.x])
 
 	# Fill in any uninitialized cells
-	for row: Array in rows:
-		for i: int in range(len(row)):
-			if row[i] == null:
-				row[i] = Cell.new(false)
+	for y: int in range(height):
+		for x: int in range(width):
+			var row = rows[y]
+			if row[x] == null:
+				row[x] = Cell.new(false, x, y)
 
 	# Set up columns as transpose of rows
 	for y in range(height):
 		columns.append([])
 		for x in range(width):
 			columns[y].append(rows[x][y])
-			
+
+func get_cell(x: int, y: int) -> Cell:
+	return rows[y][x]

@@ -10,8 +10,8 @@ enum RuleState {
 # Represents one rule on the kakuro board
 
 # row and column 0 are the part outside of the game area, for clues
-var row: int = 0
-var column: int = 0
+var x: int = 0
+var y: int = 0
 
 var is_vertical: bool = false
 var num_cells: int
@@ -20,18 +20,18 @@ var cells: Array[Cell]
 # The value all relevant cells are expected to add to
 var value: int = 0
 
-func _init(row_: int, column_: int, num_cells_: int, value_: int, is_vertical_: bool):
-	row = row_
-	column = column_
+func _init(x_: int, y_: int, num_cells_: int, value_: int, is_vertical_: bool):
+	x = x_
+	y = y_
 	num_cells = num_cells_
 	value = value_
 	is_vertical = is_vertical_
 
-static func new_vert(row_: int, column_: int, num_cells_: int, value_: int) -> Rule:
-	return Rule.new(row_, column_, num_cells_, value_, true)
+static func new_vert(x_: int, y_: int, num_cells_: int, value_: int) -> Rule:
+	return Rule.new(x_, y_, num_cells_, value_, true)
 
-static func new_horiz(row_: int, column_: int, num_cells_: int, value_: int) -> Rule:
-	return Rule.new(row_, column_, num_cells_, value_, false)
+static func new_horiz(x_: int, y_: int, num_cells_: int, value_: int) -> Rule:
+	return Rule.new(x_, y_, num_cells_, value_, false)
 
 # Check if rule is invalidated
 func validate_rule() -> RuleState:

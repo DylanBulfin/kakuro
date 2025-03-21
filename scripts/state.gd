@@ -12,18 +12,18 @@ signal selected_changed(old_selected: Vector2i)
 
 func _ready() -> void:
 	var rules: Array[Rule] = [
-		Rule.new(1, 1, 2, 17, true),
-		Rule.new(1, 1, 2, 16, false),
-		Rule.new(0, 2, 3, 12, true),
-		Rule.new(2, 0, 3, 12, false),
-		Rule.new(0, 3, 3, 10, true),
-		Rule.new(3, 0, 3, 11, false),
+		Rule.new_vert(1, 1, 2, 17),
+		Rule.new_horiz(1, 1, 2, 16),
+		Rule.new_vert(2, 0, 3, 12),
+		Rule.new_horiz(0, 2, 3, 12),
+		Rule.new_vert(3, 0, 3, 10),
+		Rule.new_horiz(0, 3, 3, 11),
 	]
 	
 	load_new_puzzle(4, 4, rules)
 
-func load_new_puzzle(x: int, y: int, rules: Array[Rule]) -> void:
-	puzzle = Puzzle.new(x, y, rules)
+func load_new_puzzle(width: int, height: int, rules: Array[Rule]) -> void:
+	puzzle = Puzzle.new(width, height, rules)
 	
 	# Find first selectable entry
 	for i in puzzle.width:
