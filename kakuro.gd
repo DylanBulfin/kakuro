@@ -12,6 +12,18 @@ func _input(event: InputEvent) -> void:
 	for i: int in range(1, 10):
 		if event.is_action_pressed(str(i)):
 			State.update_selected_digit(i)
+	if event.is_action_pressed("up"):
+		var cell := State.selected_cell
+		State.change_selection(Vector2i(cell.x, cell.y - 1))
+	if event.is_action_pressed("down"):
+		var cell := State.selected_cell
+		State.change_selection(Vector2i(cell.x, cell.y + 1))
+	if event.is_action_pressed("left"):
+		var cell := State.selected_cell
+		State.change_selection(Vector2i(cell.x - 1, cell.y))
+	if event.is_action_pressed("right"):
+		var cell := State.selected_cell
+		State.change_selection(Vector2i(cell.x + 1, cell.y))
 
 func _on_puzzle_changed() -> void:
 	draw_all()

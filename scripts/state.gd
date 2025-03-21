@@ -9,17 +9,52 @@ var is_selected: bool = true
 var selected_cell: Cell
 signal selected_changed(old_selected: Cell)
 
-func _ready() -> void:
-	var rules: Array[Rule] = [
-		Rule.new_vert(1, 1, 2, 17),
-		Rule.new_horiz(1, 1, 2, 16),
-		Rule.new_vert(2, 0, 3, 12),
-		Rule.new_horiz(0, 2, 3, 12),
-		Rule.new_vert(3, 0, 3, 10),
-		Rule.new_horiz(0, 3, 3, 11),
-	]
+var babby_rules: Array[Rule] = [
+	Rule.new_vert(1, 1, 2, 17),
+	Rule.new_horiz(1, 1, 2, 16),
+	Rule.new_vert(2, 0, 3, 12),
+	Rule.new_horiz(0, 2, 3, 12),
+	Rule.new_vert(3, 0, 3, 10),
+	Rule.new_horiz(0, 3, 3, 11),
+]
+
+var less_babby_rules: Array[Rule] = [
+	Rule.new_vert(1, 0, 2, 11),
+	Rule.new_vert(2, 0, 8, 43),
+	Rule.new_vert(6, 0, 2, 17),
+	Rule.new_vert(7, 0, 8, 41),
+	Rule.new_vert(4, 1, 2, 3),
+	Rule.new_vert(5, 1, 2, 13),
+	Rule.new_vert(3, 2, 2, 4),
+	Rule.new_vert(8, 2, 2, 4),
+	Rule.new_vert(1, 4, 2, 15),
+	Rule.new_vert(6, 4, 2, 17),
+	Rule.new_vert(4, 5, 2, 16),
+	Rule.new_vert(5, 5, 2, 9),
+	Rule.new_vert(3, 6, 2, 15),
+	Rule.new_vert(8, 6, 2, 7),
 	
-	load_new_puzzle(4, 4, rules)
+	Rule.new_horiz(0, 1, 2, 16),
+	Rule.new_horiz(0, 2, 2, 8),
+	Rule.new_horiz(0, 5, 2, 8),
+	Rule.new_horiz(0, 6, 2, 11),
+	Rule.new_horiz(1, 3, 4, 19),
+	Rule.new_horiz(1, 4, 2, 11),
+	Rule.new_horiz(1, 7, 4, 19),
+	Rule.new_horiz(1, 8, 2, 14),
+	Rule.new_horiz(3, 2, 4, 24),
+	Rule.new_horiz(3, 6, 4, 30),
+	Rule.new_horiz(5, 1, 2, 9),
+	Rule.new_horiz(5, 5, 2, 16),
+	Rule.new_horiz(6, 3, 2, 3),
+	Rule.new_horiz(6, 4, 2, 12),
+	Rule.new_horiz(6, 7, 2, 6),
+	Rule.new_horiz(6, 8, 2, 9),	
+]
+
+func _ready() -> void:
+	#load_new_puzzle(4, 4, babby_rules)
+	load_new_puzzle(9, 9, less_babby_rules)
 
 func load_new_puzzle(width: int, height: int, rules: Array[Rule]) -> void:
 	puzzle = Puzzle.new(width, height, rules)
