@@ -3,7 +3,6 @@ extends Node
 var puzzle: Puzzle
 signal puzzle_changed
 signal cell_digit_changed(cell: Cell)
-signal rule_state_changed
 
 # It would be useful to have no selection, for example a mode where you select the number first
 var is_selected: bool = true
@@ -60,8 +59,6 @@ func update_selected_digit(digit: int) -> void:
 			var state: Rule.RuleState = rule.validate_rule()
 			if state == Rule.RuleState.Incomplete:
 				all_finished = false
-			
-			rule_state_changed.emit()
 		
 		cell_digit_changed.emit(selected_cell)
 		
