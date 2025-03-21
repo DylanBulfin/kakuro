@@ -2,10 +2,10 @@ extends Node2D
 
 var frames: SpriteFrames = preload("res://assets/16x16rules_frames.aseprite")
 
-func draw_puzzle(puzzle: Puzzle) -> void:
-	for x in range(puzzle.width):
-		for y in range(puzzle.height):
-			var cell: Cell = puzzle.rows[y][x]
+func draw_puzzle() -> void:
+	for x in range(State.puzzle.width):
+		for y in range(State.puzzle.height):
+			var cell: Cell = State.puzzle.rows[y][x]
 			
 			if cell.fillable:
 				continue

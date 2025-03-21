@@ -1,37 +1,27 @@
 extends Node
 
-@onready var puzzle: Puzzle
-var selected: Cell
+var initialized: bool = false
 
 func _ready() -> void:
-	var rules: Array[Rule] = [
-		Rule.new(1, 1, 2, 17, true),
-		Rule.new(1, 1, 2, 16, false),
-		Rule.new(0, 2, 3, 12, true),
-		Rule.new(2, 0, 3, 12, false),
-		Rule.new(0, 3, 3, 10, true),
-		Rule.new(3, 0, 3, 11, false),
-	]
-	
-	puzzle = Puzzle.new(4, 4, rules)
-	%BackgroundLayer.draw_puzzle(puzzle)
-	%Rules.draw_puzzle(puzzle)
-	
-	# Find first selectable entry
-	var first_entry: Cell
-	for cell in puzzle.rows[1]:
-		if cell.fillable:
-			first_entry = cell
-			break
+	State.puzzle_changed.connect(_on_puzzle_changed)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		var tile_pos: Vector2i = event.position / 32
-		change_selection(tile_pos.y, tile_pos.x)
-		
+		var tile_pos: Vector2i = event.position / Const.PX_PER_TILE
+		State.change_selection(tile_pos)
+	for i: int in range(1, 10):
+		if event.is_action_pressed(str(i)):
+			State.update_selected_digit(i)
 
-func change_selection(row: int, column: int) -> void:
-	var cell: Cell = puzzle.rows[row][column]
-	if cell.fillable:
-		selected = cell
-		%BackgroundLayer.change_selection(row, column)
+func _on_puzzle_changed() -> void:
+	draw_all()
+
+func _process(_delta: float) -> void:
+	if not initialized:
+		draw_all()
+		initialized = true
+
+func draw_all() -> void:
+	%BackgroundLayer.draw_puzzle()
+	%Rules.draw_puzzle()
+	%NumbersLayer.draw_puzzle()

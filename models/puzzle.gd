@@ -33,15 +33,19 @@ func generate_cells():
 		for i in range(1, rule.num_cells + 1):
 			var coords: Vector2i
 			if rule.is_vertical:
-				coords = Vector2i(rule.row + i, rule.column)
+				coords = Vector2i(rule.column, rule.row + i)
 			else:
-				coords = Vector2i(rule.row, rule.column + i)
+				coords = Vector2i(rule.column + i, rule.row)
 		
-			if not rows[coords.x][coords.y]:
+			if not rows[coords.y][coords.x]:
 				# create cell
-				rows[coords.x][coords.y] = Cell.new(true)
+				rows[coords.y][coords.x] = Cell.new(true)
+	
+			# Add rule to cell
+			rows[coords.y][coords.x].rules.append(rule)
 			
-			rows[coords.x][coords.y].rules.append(rule)
+			# Add cell to rule
+			rule.cells.append(rows[coords.y][coords.x])
 
 	# Fill in any uninitialized cells
 	for row: Array in rows:
