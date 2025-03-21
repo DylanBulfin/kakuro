@@ -54,8 +54,10 @@ func validate_rule() -> RuleState:
 		# Dummy value, so we can treat it as a set
 		digit_set[cell.digit] = null
 	
-	if sum > value or (sum == value and found_empty):
-		# If sum is too high, or is perfect with an empty cell, error
+	if sum > value \
+	or (sum == value and found_empty) \
+	or (sum < value and not found_empty):
+		# If sum is too high, or is perfect with an empty cell, or too low with now empty cells, error
 		return RuleState.Invalid
 	elif sum < value or found_empty:
 		# If there is an empty cell or sum is too low, it's valid but incomplete

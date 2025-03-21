@@ -3,8 +3,8 @@ extends TileMapLayer
 func _ready() -> void:
 	State.cell_digit_changed.connect(_on_cell_digit_changed)
 
-func _on_cell_digit_changed(coords: Vector2i, cell: Cell) -> void:
-	set_cell(coords, 0, Vector2i(cell.digit - 1, 0))
+func _on_cell_digit_changed(cell: Cell) -> void:
+	set_cell(cell.position, 0, Vector2i(cell.digit - 1, 0))
 
 func draw_puzzle() -> void:
 	for x in range(State.puzzle.width):

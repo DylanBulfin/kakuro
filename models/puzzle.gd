@@ -54,11 +54,8 @@ func generate_cells():
 			if row[x] == null:
 				row[x] = Cell.new(false, x, y)
 
-	# Set up columns as transpose of rows
-	for y in range(height):
-		columns.append([])
-		for x in range(width):
-			columns[y].append(rows[x][y])
-
 func get_cell(x: int, y: int) -> Cell:
 	return rows[y][x]
+
+func get_cellv(v: Vector2i) -> Cell:
+	return rows[v.y][v.x]

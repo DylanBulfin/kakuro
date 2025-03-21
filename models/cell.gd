@@ -4,6 +4,9 @@ class_name Cell
 var x: int
 var y: int
 
+var position: Vector2i:
+	get: return Vector2i(x, y)
+
 var fillable: bool = false
 
 # 0 indicates empty
@@ -23,5 +26,7 @@ var notes: Array[bool] = [
 	false
 ]
 
-func _init(fillable_: bool, x: int, y: int) -> void:
+func _init(fillable_: bool, x_: int, y_: int) -> void:
 	fillable = fillable_
+	x = x_
+	y = y_
