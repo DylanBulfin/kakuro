@@ -23,25 +23,27 @@ impl Component {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Corner {
-    pos: (u8, u8),
-    openings: [(i8, i8); 2],
+    pub(crate) pos: (u8, u8),
+    pub(crate) openings: [(i8, i8); 2],
+    pub(crate) dir: CornerDir,
 }
 
 impl Corner {
-    pub const fn new(x: u8, y: u8, opening1: (i8, i8), opening2: (i8, i8)) -> Self {
+    pub const fn new(x: u8, y: u8, opening1: (i8, i8), opening2: (i8, i8), dir: CornerDir) -> Self {
         Self {
             pos: (x, y),
             openings: [opening1, opening2],
+            dir,
         }
     }
 
     pub const fn create_corners(width: u8, height: u8) -> [Corner; 4] {
         let (x, y) = (width - 1, height - 1);
         [
-            Corner::new(0, 0, (-1, 0), (0, -1)),
-            Corner::new(x, 0, (1, 0), (0, -1)),
-            Corner::new(0, y, (-1, 0), (0, 1)),
-            Corner::new(x, y, (1, 0), (0, 1)),
+            Corner::new(0, 0, (-1, 0), (0, -1), CornerDir::TopLeft),
+            Corner::new(x, 0, (1, 0), (0, -1), CornerDir::TopRight),
+            Corner::new(0, y, (-1, 0), (0, 1), CornerDir::BotLeft),
+            Corner::new(x, y, (1, 0), (0, 1), CornerDir::BotRight),
         ]
     }
 }
@@ -56,7 +58,8 @@ pub const COMPONENTS: [Component; 7] = [
     Component::new(4, 4, Corner::create_corners(4, 4)),
 ];
 
-enum ConnectorDir {
+#[derive(Debug, Clone, Copy)]
+pub enum CornerDir {
     TopLeft,
     TopRight,
     BotLeft,
@@ -85,13 +88,13 @@ impl Connector {
     }
 
     // TODO extend this to also return an array of cells associated with each diff
-    pub fn get_all_diffs(&self, dir: ConnectorDir) -> Vec<(i8, i8)> {
+    pub fn get_all_diffs(&self, dir: CornerDir) -> Vec<(i8, i8)> {
         let (x, y) = self.get_base_diff();
         let (mx, my) = match dir {
-            ConnectorDir::TopLeft => (-1, -1),
-            ConnectorDir::TopRight => (1, -1),
-            ConnectorDir::BotLeft => (-1, 1),
-            ConnectorDir::BotRight => (1, 1),
+            CornerDir::TopLeft => (-1, -1),
+            CornerDir::TopRight => (1, -1),
+            CornerDir::BotLeft => (-1, 1),
+            CornerDir::BotRight => (1, 1),
         };
 
         let pos = (x * mx, y * my);
