@@ -4,10 +4,11 @@ const DEFAULTS_2X2: [[bool; 3]; 3] = [
     [true, false, false],
 ];
 
-struct Component {
-    width: u8,
-    height: u8,
-    corners: [Corner; 4], // These are differentials and can be up and to the right, so they can be negative
+#[derive(Debug, Clone, Copy)]
+pub struct Component {
+    pub(crate) width: u8,
+    pub(crate) height: u8,
+    pub(crate) corners: [Corner; 4], // These are differentials and can be up and to the right, so they can be negative
 }
 
 impl Component {
@@ -20,7 +21,8 @@ impl Component {
     }
 }
 
-struct Corner {
+#[derive(Debug, Clone, Copy)]
+pub struct Corner {
     pos: (u8, u8),
     openings: [(i8, i8); 2],
 }
@@ -44,7 +46,7 @@ impl Corner {
     }
 }
 
-const COMPONENTS: [Component; 7] = [
+pub const COMPONENTS: [Component; 7] = [
     Component::new(2, 2, Corner::create_corners(2, 2)),
     Component::new(2, 3, Corner::create_corners(2, 3)),
     Component::new(3, 2, Corner::create_corners(3, 2)),
@@ -55,10 +57,10 @@ const COMPONENTS: [Component; 7] = [
 ];
 
 enum ConnectorDir {
-    TOP_LEFT,
-    TOP_RIGHT,
-    BOT_LEFT,
-    BOT_RIGHT,
+    TopLeft,
+    TopRight,
+    BotLeft,
+    BotRight,
 }
 
 enum Connector {
@@ -86,10 +88,10 @@ impl Connector {
     pub fn get_all_diffs(&self, dir: ConnectorDir) -> Vec<(i8, i8)> {
         let (x, y) = self.get_base_diff();
         let (mx, my) = match dir {
-            ConnectorDir::TOP_LEFT => (-1, -1),
-            ConnectorDir::TOP_RIGHT => (1, -1),
-            ConnectorDir::BOT_LEFT => (-1, 1),
-            ConnectorDir::BOT_RIGHT => (1, 1),
+            ConnectorDir::TopLeft => (-1, -1),
+            ConnectorDir::TopRight => (1, -1),
+            ConnectorDir::BotLeft => (-1, 1),
+            ConnectorDir::BotRight => (1, 1),
         };
 
         let pos = (x * mx, y * my);
@@ -103,8 +105,6 @@ impl Connector {
         }
     }
 }
-
-struct Grid {}
 
 #[cfg(test)]
 mod tests {
