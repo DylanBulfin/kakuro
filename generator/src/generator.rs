@@ -1,11 +1,15 @@
-use std::fmt::{Display, Write};
+use std::{
+    cell::Cell,
+    collections::HashSet,
+    fmt::{Display, Write},
+};
 
 use rand::{
-    rng,
+    fill, rng,
     seq::{IndexedRandom, SliceRandom},
 };
 
-use crate::anchors::ANCHORS_8X8;
+use crate::anchors::{ANCHORS_8X8, ANCHORS_20X20};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Component {
@@ -30,14 +34,18 @@ impl Component {
         cells[self.height as usize][self.width as usize] = GGCell::Corner(CornerDir::BotRight);
 
         // Set blocked cells
-        for x in 2..self.width as usize {
-            cells[0][x] = GGCell::Blocked;
-            cells[self.height as usize + 1][x] = GGCell::Blocked;
+        if self.width >= 5 {
+            for x in 3..self.width as usize - 1 {
+                cells[0][x] = GGCell::Blocked;
+                cells[self.height as usize + 1][x] = GGCell::Blocked;
+            }
         }
 
-        for y in 2..self.height as usize {
-            cells[y][0] = GGCell::Blocked;
-            cells[y][self.width as usize + 1] = GGCell::Blocked;
+        if self.height >= 5 {
+            for y in 3..self.height as usize - 1 {
+                cells[y][0] = GGCell::Blocked;
+                cells[y][self.width as usize + 1] = GGCell::Blocked;
+            }
         }
 
         // Set normal fillable cells
@@ -143,11 +151,11 @@ impl Display for Grid {
         for row in &self.rows {
             for cell in row {
                 f.write_char(match cell {
-                    GGCell::Uninitialized => '?',
-                    GGCell::Normal => '_',
+                    GGCell::Uninitialized => '_',
+                    GGCell::Normal => 'O',
                     GGCell::Corner(_) => 'C',
                     GGCell::FusedCorner => 'F',
-                    GGCell::Blocked => 'X',
+                    GGCell::Blocked => ',',
                 })?;
             }
 
@@ -170,6 +178,7 @@ impl Grid {
 
         let anchors = match (width, height) {
             (8, 8) => ANCHORS_8X8,
+            (20, 20) => ANCHORS_20X20,
             _ => panic!(),
         };
 
@@ -186,6 +195,7 @@ impl Grid {
         let rng = &mut rng();
 
         let mut wasted_iters = 0;
+        let mut total_comps: Vec<(u8, u8, u8, u8)> = vec![];
 
         loop {
             // Check for dead corners
@@ -213,6 +223,7 @@ impl Grid {
             sorted_hs.shuffle(rng);
             sorted_ws.shuffle(rng);
 
+            // TODO add random connector selection instead of always merging components
             // Used named loop to break from double loop easily
             'outer: for h in sorted_hs.iter() {
                 for w in sorted_ws.iter() {
@@ -233,6 +244,7 @@ impl Grid {
                                 .into_iter()
                                 .collect(),
                         );
+                        total_comps.push((ux, uy, *w, *h));
                         wasted_iters = -1;
                         break 'outer;
                     }
@@ -246,6 +258,12 @@ impl Grid {
                 break;
             }
         }
+
+        if !grid.check_is_connected() {
+            panic!("Grid not connected: {}", grid);
+        }
+
+        grid.fix_up();
 
         grid
     }
@@ -280,27 +298,16 @@ impl Grid {
                 let (ix, iy) = ((cx + x - 1) as usize, (cy + y - 1) as usize);
 
                 match &self.rows[iy][ix] {
-                    GGCell::Normal => return false,
+                    GGCell::Normal => {
+                        if comp_cell != GGCell::Uninitialized {
+                            return false;
+                        }
+                    }
                     GGCell::Uninitialized => {}
                     GGCell::Corner(dir) => {
                         if comp_cell != GGCell::Uninitialized
                             && comp_cell != GGCell::Corner(dir.get_opposite_dir())
                         {
-                            if component.width == 2 && component.height == 2 {
-                                println!(
-                                    "{} {} {} {} {} {} {:?} {:?} {:?} {:?}",
-                                    cx,
-                                    cy,
-                                    x,
-                                    y,
-                                    ix,
-                                    iy,
-                                    upper_x,
-                                    upper_y,
-                                    self.rows[iy][ix],
-                                    comp_cell
-                                );
-                            }
                             return false;
                         }
                     }
@@ -322,7 +329,9 @@ impl Grid {
                     GGCell::Uninitialized => self.rows[iy][ix] = comp_cell,
                     GGCell::Corner(_) => {
                         // We already checked that corners match
-                        self.rows[iy][ix] = GGCell::FusedCorner
+                        if let GGCell::Corner(_) = comp_cell {
+                            self.rows[iy][ix] = GGCell::FusedCorner
+                        }
                     }
                     _ => {} // Any other cells should not be overwritten,
                 }
@@ -342,20 +351,25 @@ impl Grid {
             return true;
         }
 
-        let empty_cells: [(i8, i8); 5];
+        let empty_cells: [(i8, i8); 2];
+        let corner_cells: [(i8, i8); 3];
 
         match corner.dir {
             CornerDir::TopLeft => {
-                empty_cells = [(-1, 0), (0, -1), (-1, -1), (-1, 1), (1, -1)];
+                corner_cells = [(-1, 0), (0, -1), (-1, -1)];
+                empty_cells = [(-1, 1), (1, -1)];
             }
             CornerDir::TopRight => {
-                empty_cells = [(1, 0), (0, -1), (1, -1), (1, 1), (-1, -1)];
+                corner_cells = [(1, 0), (0, -1), (1, -1)];
+                empty_cells = [(1, 1), (-1, -1)];
             }
             CornerDir::BotLeft => {
-                empty_cells = [(-1, 0), (0, 1), (-1, 1), (-1, -1), (1, 1)];
+                corner_cells = [(-1, 0), (0, 1), (-1, 1)];
+                empty_cells = [(-1, -1), (1, 1)];
             }
             CornerDir::BotRight => {
-                empty_cells = [(1, 0), (0, 1), (1, 1), (-1, 1), (1, -1)];
+                corner_cells = [(1, 0), (0, 1), (1, 1)];
+                empty_cells = [(-1, 1), (1, -1)];
             }
         }
 
@@ -364,19 +378,330 @@ impl Grid {
         for (dx, dy) in empty_cells {
             let cell = self.rows[(y + dy) as usize][(x + dx) as usize];
 
-            if cell != GGCell::Uninitialized {
+            if cell != GGCell::Uninitialized && cell != GGCell::Blocked {
+                return true;
+            }
+        }
+
+        for (dx, dy) in corner_cells {
+            let cell = self.rows[(y + dy) as usize][(x + dx) as usize];
+
+            if cell != GGCell::Uninitialized
+                && cell != GGCell::Corner(corner.dir.get_opposite_dir())
+            {
                 return true;
             }
         }
 
         false
     }
+
+    fn get_cell_fillable(&self, x: usize, y: usize) -> bool {
+        if x as u8 >= self.width || y as u8 >= self.height {
+            false
+        } else {
+            matches!(
+                self.rows[y][x],
+                GGCell::Normal | GGCell::Corner(_) | GGCell::FusedCorner
+            )
+        }
+    }
+
+    fn get_fillable_cell_count(&self) -> u32 {
+        let mut count = 0;
+
+        for y in 0..self.height as usize {
+            for x in 0..self.width as usize {
+                if self.get_cell_fillable(x, y) {
+                    count += 1
+                }
+            }
+        }
+
+        count
+    }
+
+    fn check_is_connected(&self) -> bool {
+        let fillable_cells = self.get_fillable_cell_count() as usize;
+
+        let mut cell_queue: Vec<(usize, usize)> = Vec::new();
+        let mut cell_set: HashSet<(usize, usize)> = HashSet::new();
+
+        let mut curr_cell = (0, 0);
+        cell_queue.push(curr_cell);
+        cell_set.insert(curr_cell);
+
+        loop {
+            let last_curr_cell = curr_cell; // Save to check for change after
+
+            // Try go left
+            if curr_cell.0 > 0
+                && !cell_set.contains(&(curr_cell.0 - 1, curr_cell.1))
+                && self.get_cell_fillable(curr_cell.0 - 1, curr_cell.1)
+            {
+                let cell = (curr_cell.0 - 1, curr_cell.1);
+                cell_set.insert(cell);
+                cell_queue.push(cell);
+                curr_cell = cell;
+            }
+            // Try go right
+            else if curr_cell.0 < self.width as usize - 1
+                && !cell_set.contains(&(curr_cell.0 + 1, curr_cell.1))
+                && self.get_cell_fillable(curr_cell.0 + 1, curr_cell.1)
+            {
+                let cell = (curr_cell.0 + 1, curr_cell.1);
+                cell_set.insert(cell);
+                cell_queue.push(cell);
+                curr_cell = cell;
+            }
+            // Try go up
+            else if curr_cell.1 > 0
+                && !cell_set.contains(&(curr_cell.0, curr_cell.1 - 1))
+                && self.get_cell_fillable(curr_cell.0, curr_cell.1 - 1)
+            {
+                let cell = (curr_cell.0, curr_cell.1 - 1);
+                cell_set.insert(cell);
+                cell_queue.push(cell);
+                curr_cell = cell;
+            }
+            // Try go down
+            else if curr_cell.1 < self.height as usize - 1
+                && !cell_set.contains(&(curr_cell.0, curr_cell.1 + 1))
+                && self.get_cell_fillable(curr_cell.0, curr_cell.1 + 1)
+            {
+                let cell = (curr_cell.0, curr_cell.1 + 1);
+                cell_set.insert(cell);
+                cell_queue.push(cell);
+                curr_cell = cell;
+            }
+
+            if last_curr_cell == curr_cell {
+                // Reached a dead end (didn't update cell), try to backtrack
+                if cell_queue.is_empty() {
+                    // No cells to backtrack to
+                    return false;
+                } else {
+                    curr_cell = cell_queue
+                        .pop()
+                        .expect("Unable to take element from non-empty list");
+                }
+            }
+
+            // Check if we've reached the last cell
+            if cell_set.len() == fillable_cells {
+                return true;
+            }
+        }
+    }
+
+    fn get_cages(
+        &self,
+    ) -> Vec<(
+        u8,    /*x*/
+        u8,    /*y*/
+        bool,  /*is_vertical*/
+        usize, /*len*/
+    )> {
+        let mut res = Vec::new();
+
+        // Check rows
+        for y in 0..self.height {
+            let mut x = 0u8;
+            loop {
+                if self.get_cell_fillable(x as usize, y as usize) {
+                    // Found a new block, process it
+                    let mut entry = (x, y, false, 1);
+                    x += 1;
+
+                    while self.get_cell_fillable(x as usize, y as usize) {
+                        entry.3 += 1;
+                        x += 1;
+                    }
+
+                    res.push(entry);
+                } else if x < self.width - 1 {
+                    x += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        for x in 0..self.width {
+            let mut y = 0u8;
+            loop {
+                if self.get_cell_fillable(x as usize, y as usize) {
+                    // Found a new block, process it
+                    let mut entry = (x, y, true, 1);
+                    y += 1;
+
+                    while self.get_cell_fillable(x as usize, y as usize) {
+                        entry.3 += 1;
+                        y += 1;
+                    }
+
+                    res.push(entry);
+                } else if y < self.height - 1 {
+                    y += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        res
+    }
+
+    fn fix_up(&mut self) {
+        // Get rid of any cages that are too long
+        let mut cages = self.get_cages();
+        let mut i = 0;
+
+        // Fix any >9 length cages
+        loop {
+            let (x, y, is_vertical, len) = cages[i];
+            if len > 9 {
+                let midpoint: u8 = len as u8 / 2;
+
+                for j in midpoint..len as u8 {
+                    let (nx, ny) = if is_vertical { (x, y + j) } else { (x + j, y) };
+                    let old_state = self.rows[ny as usize][nx as usize];
+
+                    self.rows[ny as usize][nx as usize] = GGCell::Blocked;
+                    if !self.check_is_connected() {
+                        self.rows[ny as usize][nx as usize] = old_state;
+                    } else {
+                        break;
+                    }
+                }
+
+                for j in (0..midpoint as u8).rev() {
+                    let (nx, ny) = if is_vertical { (x, y + j) } else { (x + j, y) };
+                    let old_state = self.rows[ny as usize][nx as usize];
+
+                    self.rows[ny as usize][nx as usize] = GGCell::Blocked;
+                    if !self.check_is_connected() {
+                        self.rows[ny as usize][nx as usize] = old_state;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            let new_cages = self.get_cages();
+
+            if new_cages.len() != cages.len() {
+                cages = new_cages;
+                i = 0
+            } else {
+                i += 1;
+                if i >= cages.len() {
+                    break;
+                }
+            }
+        }
+
+        cages = self.get_cages();
+        i = 0;
+
+        // Fix any <2 length cages
+        loop {
+            let (x, y, is_vertical, len) = cages[i];
+            if len < 2 {
+                if is_vertical {
+                    if y != 0 {
+                        let (ux, uy) = (x as usize, y as usize - 1);
+                        let old_state = self.rows[uy][ux];
+
+                        self.rows[uy][ux] = GGCell::Normal;
+
+                        if !self.check_is_connected()
+                            || self.get_cages().iter().filter(|c| c.3 > 9).count() != 0
+                        {
+                            self.rows[uy][ux] = old_state;
+                        } else {
+                            cages = self.get_cages();
+                            i = 0;
+                            continue;
+                        }
+                    }
+                    if y < self.height - 1 {
+                        let (ux, uy) = (x as usize, y as usize + 1);
+                        let old_state = self.rows[uy][ux];
+
+                        self.rows[uy][ux] = GGCell::Normal;
+
+                        if !self.check_is_connected()
+                            || self.get_cages().iter().filter(|c| c.3 > 9).count() != 0
+                        {
+                            self.rows[uy][ux] = old_state;
+                        } else {
+                            cages = self.get_cages();
+                            i = 0;
+                            continue;
+                        }
+                    }
+                } else {
+                    if x != 0 {
+                        let (ux, uy) = (x as usize - 1, y as usize);
+                        let old_state = self.rows[uy][ux];
+
+                        self.rows[uy][ux] = GGCell::Normal;
+
+                        if !self.check_is_connected()
+                            || self.get_cages().iter().filter(|c| c.3 > 9).count() != 0
+                        {
+                            self.rows[uy][ux] = old_state;
+                        } else {
+                            cages = self.get_cages();
+                            i = 0;
+                            continue;
+                        }
+                    }
+                    if x < self.width - 1 {
+                        let (ux, uy) = (x as usize + 1, y as usize);
+                        let old_state = self.rows[uy][ux];
+
+                        self.rows[uy][ux] = GGCell::Normal;
+
+                        if !self.check_is_connected()
+                            || self.get_cages().iter().filter(|c| c.3 > 9).count() != 0
+                        {
+                            self.rows[uy][ux] = old_state;
+                        } else {
+                            cages = self.get_cages();
+                            i = 0;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            i += 1;
+            if i >= cages.len() {
+                break;
+            }
+        }
+    }
+
+    fn to_bool_vec(self) -> Vec<Vec<bool>> {
+        self.rows
+            .into_iter()
+            .map(|r| {
+                r.into_iter()
+                    .map(|c| matches!(c, GGCell::Normal | GGCell::Corner(_) | GGCell::FusedCorner))
+                    .collect()
+            })
+            .collect()
+    }
 }
 
-pub fn start() {
-    let grid = Grid::generate(8, 8);
+pub fn get_grid(width: u8, height: u8) -> Vec<Vec<bool>> {
+    //let grid = Grid::generate(8, 8);
+    let grid = Grid::generate(width, height);
 
     println!("{}", grid);
+
+    grid.to_bool_vec()
 }
 
 #[cfg(test)]
@@ -391,9 +716,9 @@ mod tests {
             [
                 GGCell::Uninitialized,
                 GGCell::Uninitialized,
+                GGCell::Uninitialized,
                 GGCell::Blocked,
-                GGCell::Blocked,
-                GGCell::Blocked,
+                GGCell::Uninitialized,
                 GGCell::Uninitialized,
                 GGCell::Uninitialized,
             ],
@@ -407,13 +732,13 @@ mod tests {
                 GGCell::Uninitialized,
             ],
             [
-                GGCell::Blocked,
+                GGCell::Uninitialized,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
-                GGCell::Blocked,
+                GGCell::Uninitialized,
             ],
             [
                 GGCell::Blocked,
@@ -425,13 +750,13 @@ mod tests {
                 GGCell::Blocked,
             ],
             [
-                GGCell::Blocked,
+                GGCell::Uninitialized,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
                 GGCell::Normal,
-                GGCell::Blocked,
+                GGCell::Uninitialized,
             ],
             [
                 GGCell::Uninitialized,
@@ -445,9 +770,9 @@ mod tests {
             [
                 GGCell::Uninitialized,
                 GGCell::Uninitialized,
+                GGCell::Uninitialized,
                 GGCell::Blocked,
-                GGCell::Blocked,
-                GGCell::Blocked,
+                GGCell::Uninitialized,
                 GGCell::Uninitialized,
                 GGCell::Uninitialized,
             ],
@@ -482,5 +807,14 @@ mod tests {
         ];
 
         assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn test_volume() {
+        // The grid generation doesn't need to be incredibly efficient but shouldn't take forever. If this starts
+        // taking an annoying amount of time I should rethink the performance.
+        for _ in 0..100 {
+            let _grid = Grid::generate(20, 20);
+        }
     }
 }

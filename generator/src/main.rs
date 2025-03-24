@@ -2,5 +2,5 @@ use generator;
 
 fn main() {
     println!("Hello, world!");
-    generator::generator::start();
+    let grid = generator::generator::get_grid(20, 20);
 }
