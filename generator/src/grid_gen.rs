@@ -9,9 +9,9 @@ use rand::{
     seq::{IndexedRandom, SliceRandom},
 };
 
-use crate::anchors::{ANCHORS_8X8, ANCHORS_20X20};
+use crate::anchors::generate_anchors;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Component {
     pub(crate) width: u8,
     pub(crate) height: u8,
@@ -73,7 +73,7 @@ impl Component {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Anchor {
     pub(crate) x: u8,
     pub(crate) y: u8,
@@ -176,11 +176,18 @@ impl Grid {
             rows,
         };
 
-        let anchors = match (width, height) {
-            (8, 8) => ANCHORS_8X8,
-            (20, 20) => ANCHORS_20X20,
-            _ => panic!(),
-        };
+        if width < 5 || height < 5 || width > 30 || height > 30 {
+            panic!("{}x{} size is unsupported", width, height)
+        }
+
+        // Create anchors
+        let count = (
+            if width >= 8 { 3 } else { 2 },
+            if height >= 8 { 3 } else { 2 },
+        );
+        let comp = (2.max(width / 4), 2.max(height / 4));
+
+        let anchors = generate_anchors((width, height), comp, count);
 
         let mut active_corners: Vec<Corner> = Vec::new();
 
