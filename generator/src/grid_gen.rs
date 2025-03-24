@@ -265,6 +265,16 @@ impl Grid {
 
         grid.fix_up();
 
+        if grid
+            .get_cages()
+            .into_iter()
+            .filter(|c| c.3 < 2 || c.3 > 9)
+            .count()
+            != 0
+        {
+            panic!("Unable to fix grid")
+        }
+
         grid
     }
 

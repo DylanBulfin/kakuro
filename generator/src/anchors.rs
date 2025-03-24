@@ -1,4 +1,4 @@
-use crate::generator::{Anchor, Component};
+use crate::grid_gen::{Anchor, Component};
 
 //pub const ANCHORS_8X8: [Anchor; 4] = [
 //    Anchor::new(0, 0, Component::new(2, 2)),

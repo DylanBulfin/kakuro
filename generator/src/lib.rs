@@ -1,2 +1,2 @@
 mod anchors;
-pub mod generator;
+pub mod grid_gen;
